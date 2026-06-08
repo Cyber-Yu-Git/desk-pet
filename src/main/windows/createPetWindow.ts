@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { BrowserWindow, Menu, shell } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import { EventNames } from '../../shared/eventNames';
-import type { PetState } from '../../shared/types';
+import type { AppPanel, PetState } from '../../shared/types';
 
 export function createPetWindow(): BrowserWindow {
   const petWindow = new BrowserWindow({
@@ -35,9 +35,7 @@ export function createPetWindow(): BrowserWindow {
     event.preventDefault();
   });
 
-  petWindow.webContents.on('context-menu', () => {
-    createPetContextMenu(petWindow).popup({ window: petWindow });
-  });
+  petWindow.webContents.on('context-menu', () => showPetContextMenu(petWindow));
 
   petWindow.once('ready-to-show', () => {
     petWindow.show();
@@ -52,25 +50,45 @@ export function createPetWindow(): BrowserWindow {
   return petWindow;
 }
 
+export function showPetContextMenu(petWindow: BrowserWindow): void {
+  createPetContextMenu(petWindow).popup({ window: petWindow });
+}
+
 function createPetContextMenu(petWindow: BrowserWindow): Menu {
   return Menu.buildFromTemplate([
     {
       label: '聊天',
-      click: () => emitPetState(petWindow, 'idle', 'context-menu-chat')
+      click: () => openPanel(petWindow, 'chat')
     },
     {
-      label: '新增待办',
-      click: () => emitPetState(petWindow, 'reminding', 'context-menu-todo')
+      label: '待办 / 提醒',
+      click: () => openPanel(petWindow, 'todo')
     },
     {
-      label: '帮我盯这个任务',
-      click: () => emitPetState(petWindow, 'working', 'context-menu-watch')
+      label: 'Agent 监听',
+      click: () => openPanel(petWindow, 'agent')
+    },
+    {
+      label: '记忆',
+      click: () => openPanel(petWindow, 'memory')
     },
     {
       label: '生成分享图',
-      click: () => emitPetState(petWindow, 'sharing', 'context-menu-share')
+      click: () => openPanel(petWindow, 'share')
     },
     { type: 'separator' },
+    {
+      label: '待机',
+      click: () => emitPetState(petWindow, 'idle', 'context-menu-idle')
+    },
+    {
+      label: '工作中',
+      click: () => emitPetState(petWindow, 'working', 'context-menu-working')
+    },
+    {
+      label: '完成',
+      click: () => emitPetState(petWindow, 'success', 'context-menu-success')
+    },
     {
       label: '勿扰模式',
       type: 'checkbox',
@@ -82,9 +100,13 @@ function createPetContextMenu(petWindow: BrowserWindow): Menu {
     },
     {
       label: '设置',
-      click: () => emitPetState(petWindow, 'idle', 'context-menu-settings')
+      click: () => openPanel(petWindow, 'settings')
     },
     { type: 'separator' },
+    {
+      label: '收起面板',
+      click: () => petWindow.webContents.send('app:collapse-panel')
+    },
     {
       label: '隐藏',
       click: () => petWindow.hide()
@@ -94,6 +116,10 @@ function createPetContextMenu(petWindow: BrowserWindow): Menu {
       click: () => petWindow.webContents.send('app:request-quit')
     }
   ]);
+}
+
+function openPanel(petWindow: BrowserWindow, panel: AppPanel): void {
+  petWindow.webContents.send('app:open-panel', panel);
 }
 
 function emitPetState(petWindow: BrowserWindow, state: PetState, reason: string): void {

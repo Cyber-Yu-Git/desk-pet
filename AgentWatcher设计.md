@@ -1,43 +1,43 @@
 # AgentWatcher设计
 
-## 1. 目标
+## 1. 架构
+
+Agent Watcher 采用 **Adapter 模式**，所有 Agent 通过统一接口接入：
+
+```
+AgentEventIngestServer (HTTP 接收)
+        │
+AgentRegistry (统一查询)
+        │
+┌───────┼───────┬──────────┬────────┐
+Claude  OpenClaw OpenCode  Hermes  ... (Adapter)
+```
+
+每个 Adapter 实现：`discover() / install() / remove() / normalize() / isInstalled()`。
+
+详见 `docs/Agent-Adapter架构规范.md`。
+
+## 2. 目标
 
 Agent Watcher 是本产品的差异化核心。它负责观察 AI Agent 的运行状态，并把不同来源的状态统一成标准事件，让桌宠能够及时提醒用户。
-
-目标：
 
 - 识别 Agent 是否开始、运行中、等待确认、完成、失败、疑似卡住。
 - 状态统一转换为 `AgentEvent`。
 - 优先支持稳定、低成本、非侵入式监听。
 - 不依赖屏幕 OCR。
-- 不为了首版兼容所有 Agent。
 
-## 2. 支持对象
+## 3. 支持对象
 
-P0：
-
-- Agent 状态模拟器。
-- 手动“帮我盯这个任务”兜底入口。
-
-P0.5 / 内测增强：
-
-- Claude Code / Codex / Trae / 小龙虾 OpenClaw 中选择一个状态来源最稳定的工具，打通真实集成。
-- 普通终端任务兜底。
-
-P1：
-
-- 第一个真实 Agent Watcher 稳定化。
-- Trae。
-- 小龙虾 OpenClaw。
-- 第二个真实 Agent 工具。
-
-P2：
-
-- 写作 Agent。
-- 浏览器 Agent。
-- 设计 Agent。
-- 自动化工作流。
-- GitHub Actions / CI。
+| 优先级 | Agent | 接入方式 |
+|--------|-------|---------|
+| P0 | Agent 状态模拟器 | 手动触发 |
+| P0 | 手动”帮我盯这个任务”兜底 | 右键菜单 |
+| P0.5 | Claude Code | Hooks 机制 |
+| P0.5 | OpenClaw | 日志尾随 |
+| P0.5 | OpenCode | 进程检测 |
+| P0.5 | Hermes | 进程检测 |
+| P1 | Trae | 待实现 |
+| P2 | GitHub Actions / CI | 待实现 |
 
 ## 3. 状态定义
 

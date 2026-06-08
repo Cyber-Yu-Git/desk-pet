@@ -17,18 +17,19 @@ function createMessage(content: string, role: ChatMessage['role'] = 'user'): Cha
 
 describe('ChatHistoryStore', () => {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'desk-pet-test-')));
-  const filePath = join(dir, 'chat.json');
 
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
   });
 
   it('returns an empty list for a fresh store', () => {
+    const filePath = join(dir, 'fresh-chat.json');
     const store = new ChatHistoryStore(filePath);
     expect(store.list()).toEqual([]);
   });
 
   it('appends and returns persisted messages', () => {
+    const filePath = join(dir, 'persisted-chat.json');
     const store = new ChatHistoryStore(filePath);
     const m1 = createMessage('你好');
     const m2 = createMessage('好久不见');
@@ -43,6 +44,7 @@ describe('ChatHistoryStore', () => {
   });
 
   it('trims messages to the limit', () => {
+    const filePath = join(dir, 'limited-chat.json');
     const store = new ChatHistoryStore(filePath);
     const bulk = Array.from({ length: 250 }, (_, i) => createMessage(`msg-${i}`));
     const result = store.append(bulk);
@@ -52,6 +54,7 @@ describe('ChatHistoryStore', () => {
   });
 
   it('recovers from a corrupted file', () => {
+    const filePath = join(dir, 'corrupted-chat.json');
     writeFileSync(filePath, 'not-json{{{');
 
     const store = new ChatHistoryStore(filePath);

@@ -1,5 +1,5 @@
 import { chatSystemPrompt } from '../../shared/defaults';
-import type { AppResult, ChatMessage } from '../../shared/types';
+import type { AppResult, ChatMessage, MemoryItem } from '../../shared/types';
 
 interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant';
@@ -23,9 +23,10 @@ export interface DeepSeekClientOptions {
   model?: string;
   timeoutMs?: number;
   fetcher?: typeof fetch;
+  memories?: MemoryItem[];
 }
 
-export function buildDeepSeekMessages(history: ChatMessage[]): DeepSeekMessage[] {
+export function buildDeepSeekMessages(history: ChatMessage[], memories: MemoryItem[] = []): DeepSeekMessage[] {
   const recentMessages = history
     .filter((message) => message.role === 'user' || message.role === 'assistant')
     .slice(-20)
@@ -37,10 +38,23 @@ export function buildDeepSeekMessages(history: ChatMessage[]): DeepSeekMessage[]
   return [
     {
       role: 'system',
-      content: chatSystemPrompt
+      content: buildSystemPrompt(memories)
     },
     ...recentMessages
   ];
+}
+
+function buildSystemPrompt(memories: MemoryItem[]): string {
+  if (memories.length === 0) {
+    return chatSystemPrompt;
+  }
+
+  const memoryLines = memories
+    .slice(0, 8)
+    .map((memory) => `- [${memory.kind}] ${memory.content}`)
+    .join('\n');
+
+  return `${chatSystemPrompt}\n\n以下是用户允许保存的长期记忆，只在相关时自然使用，不要逐条复述：\n${memoryLines}`;
 }
 
 export async function requestDeepSeekReply(
@@ -73,7 +87,7 @@ export async function requestDeepSeekReply(
       },
       body: JSON.stringify({
         model: options.model ?? process.env.DEEPSEEK_MODEL ?? 'deepseek-chat',
-        messages: buildDeepSeekMessages(history),
+        messages: buildDeepSeekMessages(history, options.memories),
         temperature: 0.7
       }),
       signal: controller.signal

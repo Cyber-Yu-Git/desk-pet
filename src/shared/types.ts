@@ -18,7 +18,32 @@ export type AgentStatus =
   | 'failed'
   | 'idle_too_long';
 
-export type AgentKind = 'claude-code' | 'codex' | 'trae' | 'openclaw' | 'terminal';
+export type AgentKind = 'claude-code' | 'codex' | 'trae' | 'openclaw' | 'opencode' | 'hermes' | 'terminal';
+
+export type AppPanel = 'chat' | 'todo' | 'agent' | 'memory' | 'share' | 'settings';
+
+export type AgentIntegrationScope =
+  | 'windows-user'
+  | 'windows-project'
+  | 'wsl-user'
+  | 'wsl-project'
+  | 'linux-user'
+  | 'linux-project';
+
+export interface AgentIntegration {
+  id: string;
+  agent: AgentKind;
+  scope: AgentIntegrationScope;
+  scopePath: string;
+  settingsPath: string;
+  enabled: boolean;
+  installed: boolean;
+  command: string;
+  createdAt: string;
+  updatedAt: string;
+  installedAt?: string;
+  lastEventAt?: string;
+}
 
 export interface AgentEvent {
   id: string;
@@ -39,6 +64,55 @@ export interface AgentEvent {
   projectPath?: string;
   priority: 'low' | 'normal' | 'high';
   createdAt: string;
+}
+
+export interface AgentTask {
+  id: string;
+  integrationId?: string;
+  title: string;
+  agent: AgentKind;
+  scope?: AgentIntegrationScope;
+  sessionId?: string;
+  status: AgentStatus;
+  message?: string;
+  projectPath?: string;
+  source: 'simulator' | 'watcher';
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+}
+
+export interface AgentTaskCreateInput {
+  title: string;
+  agent: AgentKind;
+  projectPath?: string;
+}
+
+export interface AgentTaskUpdateStatusInput {
+  id: string;
+  status: AgentStatus;
+  message?: string;
+}
+
+export interface DiscoveredClaudeCode {
+  label: string;
+  settingsPath: string;
+  scope: AgentIntegrationScope;
+  scopePath: string;
+  exists: boolean;
+  source: 'native' | 'wsl';
+}
+
+export interface AgentHookStatus {
+  serverRunning: boolean;
+  endpoint: string;
+  installed: boolean;
+  settingsPath: string;
+  bridgePath: string;
+  configPath: string;
+  command: string;
+  lastEventAt?: string;
+  integrations: AgentIntegration[];
 }
 
 export interface PetEvent {
@@ -75,10 +149,55 @@ export interface Todo {
   status: 'active' | 'completed' | 'deleted';
   dueAt?: string;
   remindAt?: string;
+  remindedAt?: string;
   source: 'manual' | 'chat' | 'agent' | 'imported';
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+}
+
+export interface TodoCreateInput {
+  title: string;
+  notes?: string;
+  dueAt?: string;
+  remindAt?: string;
+}
+
+export interface TodoSnoozeInput {
+  id: string;
+  minutes: number;
+}
+
+export interface ShareGenerateInput {
+  dataUrl: string;
+  fileName?: string;
+}
+
+export interface ShareGenerateResult {
+  filePath: string;
+}
+
+export type MemoryKind = 'profile' | 'preference' | 'project' | 'fact' | 'note';
+export type MemorySource = 'manual' | 'chat' | 'agent' | 'system';
+
+export interface MemoryItem {
+  id: string;
+  kind: MemoryKind;
+  content: string;
+  source: MemorySource;
+  tags: string[];
+  confidence: number;
+  createdAt: string;
+  updatedAt: string;
+  lastUsedAt?: string;
+}
+
+export interface MemoryCreateInput {
+  kind: MemoryKind;
+  content: string;
+  tags?: string[];
+  source?: MemorySource;
+  confidence?: number;
 }
 
 export interface PetConfig {
@@ -93,6 +212,22 @@ export interface NotificationConfig {
   soundEnabled: boolean;
 }
 
+export interface DeepSeekConfig {
+  apiKeyConfigured: boolean;
+  model: string;
+  encryptionAvailable: boolean;
+}
+
+export interface DeepSeekUpdateInput {
+  apiKey?: string;
+  model?: string;
+}
+
+export interface DataLocationInfo {
+  userDataPath: string;
+  shareImagePath: string;
+}
+
 export type AppErrorCode =
   | 'DEEPSEEK_NOT_CONFIGURED'
   | 'DEEPSEEK_TIMEOUT'
@@ -100,8 +235,12 @@ export type AppErrorCode =
   | 'DEEPSEEK_REQUEST_FAILED'
   | 'TODO_INVALID_INPUT'
   | 'REMINDER_TIME_INVALID'
+  | 'AGENT_INVALID_INPUT'
   | 'AGENT_SOURCE_UNAVAILABLE'
+  | 'MEMORY_INVALID_INPUT'
   | 'SHARE_REDACTION_REQUIRED'
+  | 'SETTINGS_INVALID_INPUT'
+  | 'SETTINGS_ENCRYPTION_UNAVAILABLE'
   | 'IPC_INVALID_PAYLOAD'
   | 'STORAGE_READ_FAILED'
   | 'STORAGE_WRITE_FAILED';

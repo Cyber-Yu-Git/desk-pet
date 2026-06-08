@@ -23,6 +23,23 @@ describe('deepSeekClient', () => {
     expect(messages.at(-1)?.content).toBe('message-24');
   });
 
+  it('adds memories to the system prompt', () => {
+    const messages = buildDeepSeekMessages([], [
+      {
+        id: 'memory-1',
+        kind: 'preference',
+        content: '喜欢短回答',
+        source: 'manual',
+        tags: [],
+        confidence: 0.9,
+        createdAt: new Date(2026, 0, 1).toISOString(),
+        updatedAt: new Date(2026, 0, 1).toISOString()
+      }
+    ]);
+
+    expect(messages[0]?.content).toContain('喜欢短回答');
+  });
+
   it('fails fast when DeepSeek API key is missing', async () => {
     const result = await requestDeepSeekReply([], {
       apiKey: '',

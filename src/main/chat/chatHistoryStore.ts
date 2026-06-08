@@ -20,6 +20,10 @@ export class ChatHistoryStore {
     return nextMessages;
   }
 
+  clear(): void {
+    this.write({ chatMessages: [] });
+  }
+
   private read(): DeskPetStore {
     if (!existsSync(this.filePath)) {
       return { chatMessages: [] };

@@ -44,7 +44,7 @@
 前端：React + TypeScript + Vite
 构建：electron-vite
 桌宠渲染：Canvas Sprite
-本地存储：electron-store 起步，后续升级 SQLite
+本地存储：本地 JSON 文件起步，后续升级 SQLite / 向量索引
 大模型：DeepSeek API
 平台：Windows first
 ```
@@ -72,20 +72,80 @@
 7. [UI交互设计.md](./UI交互设计.md)：桌宠、气泡、提醒、设置页和分享页交互。
 8. [安全与隐私设计.md](./安全与隐私设计.md)：Electron 安全、API Key、脱敏、插件权限和日志策略。
 9. [开发计划.md](./开发计划.md)：分阶段开发任务和验收顺序。
+10. [MVP内测验收清单.md](./MVP内测验收清单.md)：内测前手动验收步骤。
+11. [内测反馈模板.md](./内测反馈模板.md)：第一批用户反馈收集模板。
 
 ## 当前阶段
 
-当前处于产品和技术方案设计阶段，尚未进入正式编码。
+当前已经进入 MVP 编码阶段，已跑通：
 
-第一阶段目标：
+- 透明置顶桌宠窗口。
+- Canvas 桌宠形象和状态变化。
+- DeepSeek 聊天。
+- 待办提醒。
+- Agent 状态模拟器。
+- 分享图生成。
+- 轻量长期记忆。
+- 设置与安全面板。
 
-- 搭建 Electron + React + TypeScript 项目。
-- 实现透明置顶桌宠窗口。
-- 实现 Canvas 待机动画。
-- 实现 DeepSeek 聊天气泡。
-- 实现待办提醒。
-- 实现 Agent 状态模拟器。
-- 实现静态分享图。
+## 本地开发
+
+安装依赖：
+
+```powershell
+npm install
+```
+
+启动开发版：
+
+```powershell
+npm run dev
+```
+
+DeepSeek API Key 可以在应用内“设置”面板保存。也可以用环境变量临时启动：
+
+```powershell
+$env:DEEPSEEK_API_KEY="你的 DeepSeek API Key"
+npm run dev
+```
+
+常用验证：
+
+```powershell
+npm run lint
+npm run build
+npm run test:smoke
+```
+
+## Windows 打包
+
+生成图标资产：
+
+```powershell
+npm run prepare:assets
+```
+
+生成 Windows 安装包：
+
+```powershell
+npm run dist:win
+```
+
+生成免安装版目录：
+
+```powershell
+npm run pack:win
+```
+
+产物输出到：
+
+```text
+dist/
+```
+
+当前打包脚本默认关闭 exe 元数据编辑，以绕开部分 Windows 环境中 `winCodeSign` 解压符号链接失败的问题。后续如果要做正式签名、完整 exe 图标和发布者信息，需要在具备符号链接权限的终端环境中重新开启 `win.signAndEditExecutable`。
+
+应用数据目录可以在应用内“设置”面板打开。分享图默认保存到 Windows 图片目录下的“赛博宇桌宠分享图”文件夹。
 
 ## 不做事项
 
